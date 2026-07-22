@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#111318" />
+  <title>MAX Mini App Test</title>
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Официальный MAX Bridge -->
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="badge" id="modeBadge">Проверка среды…</div>
+      <h1>MAX Mini App работает</h1>
+      <p class="subtitle">
+        Минимальный тест интерфейса и подключения MAX Bridge.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Среда запуска</h2>
+      <dl class="info-grid">
+        <div>
+          <dt>MAX Bridge</dt>
+          <dd id="bridgeStatus">Проверяем…</dd>
+        </div>
+        <div>
+          <dt>Платформа</dt>
+          <dd id="platform">—</dd>
+        </div>
+        <div>
+          <dt>Версия MAX</dt>
+          <dd id="version">—</dd>
+        </div>
+        <div>
+          <dt>Устройство</dt>
+          <dd id="device">—</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Пользователь</h2>
+      <div class="user-row">
+        <img id="avatar" class="avatar" alt="" hidden />
+        <div>
+          <strong id="userName">Данные пока не получены</strong>
+          <p id="userMeta">Откройте приложение внутри MAX.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Интерактивный тест</h2>
+      <p>Нажатие доказывает, что JavaScript и интерфейс работают.</p>
+      <button id="testButton" type="button">Нажать</button>
+      <p class="counter">Нажатий: <strong id="counter">0</strong></p>
+    </section>
+
+    <section class="card debug-card">
+      <details>
+        <summary>Технические данные</summary>
+        <pre id="debugOutput">Загрузка…</pre>
+      </details>
+    </section>
+
+    <footer>
+      Тестовое Mini App без бизнес-логики и backend.
+    </footer>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
