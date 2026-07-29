@@ -3,76 +3,273 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" content="#111318" />
-  <title>MAX Mini App Test</title>
+  <meta name="theme-color" content="#f4f3ef" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'"
+  />
+  <meta
+    name="description"
+    content="Учебная демонстрация фишинга: какие данные видит поддельная форма авторизации."
+  />
+  <title>Тындекс ID — учебная демо фишинга</title>
   <link rel="stylesheet" href="./style.css" />
-
-  <!-- Официальный MAX Bridge -->
-  <script src="https://st.max.ru/js/max-web-app.js"></script>
 </head>
 <body>
-  <main class="app">
-    <section class="hero">
-      <div class="badge" id="modeBadge">Проверка среды…</div>
-      <h1>MAX Mini App работает</h1>
-      <p class="subtitle">
-        Минимальный тест интерфейса и подключения MAX Bridge.
+  <main class="site-shell">
+    <header class="topbar">
+      <a class="wordmark" href="#" aria-label="Тындекс ID — на главную">
+        <span aria-hidden="true">Т</span>ындекс <b>ID</b>
+      </a>
+      <div class="demo-label">
+        <span class="demo-label__dot" aria-hidden="true"></span>
+        Учебная демо
+      </div>
+    </header>
+
+    <section class="intro" aria-labelledby="pageTitle">
+      <p class="eyebrow">Мастер-класс по цифровой безопасности</p>
+      <h1 id="pageTitle">Выглядит правильно.<br /><em>Но безопасно ли?</em></h1>
+      <p class="intro__copy">
+        Посмотрите, как знакомый интерфейс может убедить человека добровольно
+        отдать логин, пароль и даже код подтверждения.
       </p>
     </section>
 
-    <section class="card">
-      <h2>Среда запуска</h2>
-      <dl class="info-grid">
-        <div>
-          <dt>MAX Bridge</dt>
-          <dd id="bridgeStatus">Проверяем…</dd>
-        </div>
-        <div>
-          <dt>Платформа</dt>
-          <dd id="platform">—</dd>
-        </div>
-        <div>
-          <dt>Версия MAX</dt>
-          <dd id="version">—</dd>
-        </div>
-        <div>
-          <dt>Устройство</dt>
-          <dd id="device">—</dd>
-        </div>
-      </dl>
-    </section>
-
-    <section class="card">
-      <h2>Пользователь</h2>
-      <div class="user-row">
-        <img id="avatar" class="avatar" alt="" hidden />
-        <div>
-          <strong id="userName">Данные пока не получены</strong>
-          <p id="userMeta">Откройте приложение внутри MAX.</p>
-        </div>
+    <section class="demo" aria-label="Интерактивная демонстрация">
+      <div class="tabs" role="tablist" aria-label="Этапы демонстрации">
+        <button
+          class="tab is-active"
+          id="authTab"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="authPanel"
+          data-tab="auth"
+        >
+          <span class="tab__number">1</span>
+          Авторизация
+        </button>
+        <button
+          class="tab"
+          id="dataTab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="dataPanel"
+          data-tab="data"
+          tabindex="-1"
+        >
+          <span class="tab__number">2</span>
+          Что увидит фишер
+          <span class="tab__counter" id="filledCounter" aria-label="Заполнено полей">0</span>
+        </button>
       </div>
+
+      <section
+        class="panel is-active"
+        id="authPanel"
+        role="tabpanel"
+        aria-labelledby="authTab"
+      >
+        <div class="auth-layout">
+          <div class="auth-card">
+            <div class="auth-card__heading">
+              <div class="compact-logo" aria-label="Тындекс ID">
+                <span aria-hidden="true">Т</span>ындекс ID
+              </div>
+              <span class="secure-pill">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2 2 0 0 1 2 2v7H6v-7a2 2 0 0 1 2-2Z" /></svg>
+                Безопасный вход
+              </span>
+            </div>
+
+            <div class="training-warning" role="note">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.01M10.3 3.8 2.6 17.1A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.9L13.7 3.8a2 2 0 0 0-3.4 0Z" /></svg>
+              <div>
+                <strong>Не вводите настоящие данные</strong>
+                <span>Используйте вымышленные значения или кнопку с демо-данными.</span>
+              </div>
+            </div>
+
+            <form id="loginForm" novalidate autocomplete="off">
+              <label class="field" for="loginInput">
+                <span>Телефон или почта</span>
+                <input
+                  id="loginInput"
+                  name="login"
+                  type="text"
+                  placeholder="demo@tyndex.example"
+                  autocomplete="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  maxlength="80"
+                />
+                <small class="field__error" id="loginError"></small>
+              </label>
+
+              <label class="field" for="passwordInput">
+                <span>Пароль</span>
+                <span class="input-wrap">
+                  <input
+                    id="passwordInput"
+                    name="password"
+                    type="password"
+                    placeholder="Не настоящий пароль"
+                    autocomplete="new-password"
+                    maxlength="80"
+                  />
+                  <button class="icon-button" id="toggleInputPassword" type="button" aria-label="Показать пароль">
+                    <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.7" /></svg>
+                  </button>
+                </span>
+                <small class="field__error" id="passwordError"></small>
+              </label>
+
+              <label class="field" for="codeInput">
+                <span>Код из сообщения</span>
+                <input
+                  id="codeInput"
+                  name="code"
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="000 000"
+                  autocomplete="one-time-code"
+                  maxlength="8"
+                />
+                <small class="field__hint">Настоящие сервисы не просят пересылать код третьим лицам.</small>
+                <small class="field__error" id="codeError"></small>
+              </label>
+
+              <label class="consent" for="consentInput">
+                <input id="consentInput" type="checkbox" />
+                <span>Я понимаю, что это учебный стенд, и ввожу только вымышленные данные.</span>
+              </label>
+              <small class="consent-error" id="consentError"></small>
+
+              <button class="primary-button" type="submit">
+                Войти в Тындекс
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+              </button>
+              <button class="text-button" id="fillDemoButton" type="button">
+                Подставить безопасные демо-данные
+              </button>
+            </form>
+
+            <p class="auth-card__footnote">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-12v7m0-10v.01" /></svg>
+              Здесь нет входа в реальный аккаунт. Это вымышленный бренд.
+            </p>
+          </div>
+
+          <aside class="lesson-card" aria-label="На что обратить внимание">
+            <div class="lesson-card__art">
+              <img
+                src="./public/ChatGPT%20Image%2030%20%D0%B8%D1%8E%D0%BB.%202026%20%D0%B3.,%2001_47_18%20(1).png"
+                alt="Логотип вымышленного сервиса Тындекс ID"
+              />
+            </div>
+            <div class="lesson-card__content">
+              <p class="eyebrow">Почему можно поверить</p>
+              <h2>Знакомый дизайн снижает бдительность</h2>
+              <ul class="signal-list">
+                <li><span>01</span>Похожее название и фирменные цвета</li>
+                <li><span>02</span>Замок и слова про безопасность</li>
+                <li><span>03</span>Привычный сценарий входа</li>
+              </ul>
+              <p class="lesson-card__note">Но ни один из этих элементов не доказывает подлинность страницы.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section
+        class="panel"
+        id="dataPanel"
+        role="tabpanel"
+        aria-labelledby="dataTab"
+        hidden
+      >
+        <div class="reveal-layout">
+          <div class="reveal-card">
+            <div class="reveal-card__top">
+              <span class="danger-icon" aria-hidden="true">!</span>
+              <div>
+                <p class="eyebrow">Вид с другой стороны</p>
+                <h2>Вот что получила бы поддельная страница</h2>
+              </div>
+            </div>
+
+            <div class="captured-list" aria-live="polite">
+              <div class="captured-row">
+                <span class="captured-row__label">Логин</span>
+                <code id="capturedLogin">ещё не введён</code>
+              </div>
+              <div class="captured-row">
+                <span class="captured-row__label">Пароль</span>
+                <div class="captured-row__value">
+                  <code id="capturedPassword">ещё не введён</code>
+                  <button class="reveal-button" id="revealPasswordButton" type="button" disabled>Показать</button>
+                </div>
+              </div>
+              <div class="captured-row">
+                <span class="captured-row__label">Код подтверждения</span>
+                <code id="capturedCode">ещё не введён</code>
+              </div>
+              <div class="captured-row">
+                <span class="captured-row__label">Момент ввода</span>
+                <code id="capturedTime">—</code>
+              </div>
+            </div>
+
+            <div class="local-status">
+              <span class="local-status__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m5 5 14 14M8.5 8.5A5 5 0 0 0 7 12v7h10v-7a5 5 0 0 0-.4-2M9 6.9V8m6-1.1V8" /></svg>
+              </span>
+              <div>
+                <strong>В этой демо отправка заблокирована</strong>
+                <span>Данные существуют только в оперативной памяти этой вкладки.</span>
+              </div>
+            </div>
+
+            <div class="reveal-actions">
+              <button class="secondary-button" id="backButton" type="button">Вернуться к форме</button>
+              <button class="danger-button" id="clearButton" type="button">Очистить данные</button>
+            </div>
+          </div>
+
+          <aside class="takeaway-card">
+            <p class="eyebrow">Главный вывод</p>
+            <h2>Интерфейс подделать легко. Доверие — дорого.</h2>
+            <p>
+              Если бы у этой страницы был сервер, введённые значения можно было бы
+              мгновенно отправить злоумышленнику — ещё до нажатия кнопки «Войти».
+            </p>
+            <div class="checklist">
+              <h3>Проверяйте перед вводом</h3>
+              <ul>
+                <li>точный адрес сайта и доменную зону;</li>
+                <li>откуда пришла ссылка;</li>
+                <li>зачем сервису пароль или код именно сейчас.</li>
+              </ul>
+            </div>
+            <p class="takeaway-card__small">
+              HTTPS и красивый замок означают шифрование соединения, но не честность владельца сайта.
+            </p>
+          </aside>
+        </div>
+      </section>
     </section>
 
-    <section class="card">
-      <h2>Интерактивный тест</h2>
-      <p>Нажатие доказывает, что JavaScript и интерфейс работают.</p>
-      <button id="testButton" type="button">Нажать</button>
-      <p class="counter">Нажатий: <strong id="counter">0</strong></p>
-    </section>
-
-    <section class="card debug-card">
-      <details>
-        <summary>Технические данные</summary>
-        <pre id="debugOutput">Загрузка…</pre>
-      </details>
-    </section>
-
-    <footer>
-      Тестовое Mini App без бизнес-логики и backend.
+    <footer class="footer">
+      <span>Тындекс ID — вымышленный сервис для мастер-класса.</span>
+      <span>Без backend · без cookies · без аналитики</span>
     </footer>
   </main>
 
+  <noscript>
+    <div class="noscript">Для интерактивной демонстрации нужен JavaScript.</div>
+  </noscript>
   <script src="./app.js"></script>
 </body>
 </html>

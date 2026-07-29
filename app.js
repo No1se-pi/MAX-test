@@ -4,106 +4,203 @@
   const byId = (id) => document.getElementById(id);
 
   const ui = {
-    modeBadge: byId("modeBadge"),
-    bridgeStatus: byId("bridgeStatus"),
-    platform: byId("platform"),
-    version: byId("version"),
-    device: byId("device"),
-    avatar: byId("avatar"),
-    userName: byId("userName"),
-    userMeta: byId("userMeta"),
-    testButton: byId("testButton"),
-    counter: byId("counter"),
-    debugOutput: byId("debugOutput"),
+    tabs: Array.from(document.querySelectorAll("[data-tab]")),
+    authPanel: byId("authPanel"),
+    dataPanel: byId("dataPanel"),
+    form: byId("loginForm"),
+    login: byId("loginInput"),
+    password: byId("passwordInput"),
+    code: byId("codeInput"),
+    consent: byId("consentInput"),
+    loginError: byId("loginError"),
+    passwordError: byId("passwordError"),
+    codeError: byId("codeError"),
+    consentError: byId("consentError"),
+    fillDemo: byId("fillDemoButton"),
+    toggleInputPassword: byId("toggleInputPassword"),
+    filledCounter: byId("filledCounter"),
+    capturedLogin: byId("capturedLogin"),
+    capturedPassword: byId("capturedPassword"),
+    capturedCode: byId("capturedCode"),
+    capturedTime: byId("capturedTime"),
+    revealPassword: byId("revealPasswordButton"),
+    back: byId("backButton"),
+    clear: byId("clearButton"),
   };
 
-  const webApp = window.WebApp;
-  const isInsideMax = Boolean(webApp);
+  const state = {
+    login: "",
+    password: "",
+    code: "",
+    updatedAt: null,
+    passwordRevealed: false,
+  };
 
-  function safeValue(value, fallback = "Не передано") {
-    return value === undefined || value === null || value === ""
-      ? fallback
-      : String(value);
+  const panels = {
+    auth: ui.authPanel,
+    data: ui.dataPanel,
+  };
+
+  function escapeMask(value) {
+    if (!value) return "ещё не введён";
+    return "•".repeat(Math.min(value.length, 16));
   }
 
-  function renderEnvironment() {
-    if (!isInsideMax) {
-      ui.modeBadge.textContent = "Демо-режим в браузере";
-      ui.modeBadge.classList.add("demo");
-      ui.bridgeStatus.textContent = "Не обнаружен";
-      ui.platform.textContent = "Обычный браузер";
-      ui.version.textContent = "—";
-      ui.device.textContent = navigator.userAgent;
-      ui.debugOutput.textContent = JSON.stringify(
-        {
-          insideMax: false,
-          note: "Это нормально. Для получения данных Bridge откройте URL внутри MAX.",
-          userAgent: navigator.userAgent,
-        },
-        null,
-        2
-      );
-      return;
+  function formatTime(date) {
+    return date
+      ? new Intl.DateTimeFormat("ru-RU", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }).format(date)
+      : "—";
+  }
+
+  function updateCapturedView() {
+    const filledCount = [state.login, state.password, state.code].filter(Boolean).length;
+
+    ui.filledCounter.textContent = String(filledCount);
+    ui.filledCounter.classList.toggle("has-data", filledCount > 0);
+    ui.capturedLogin.textContent = state.login || "ещё не введён";
+    ui.capturedPassword.textContent = state.passwordRevealed
+      ? state.password || "ещё не введён"
+      : escapeMask(state.password);
+    ui.capturedCode.textContent = state.code || "ещё не введён";
+    ui.capturedTime.textContent = formatTime(state.updatedAt);
+    ui.revealPassword.disabled = !state.password;
+    ui.revealPassword.textContent = state.passwordRevealed ? "Скрыть" : "Показать";
+  }
+
+  function syncState() {
+    state.login = ui.login.value.trim();
+    state.password = ui.password.value;
+    state.code = ui.code.value.trim();
+    state.updatedAt = state.login || state.password || state.code ? new Date() : null;
+    updateCapturedView();
+  }
+
+  function selectTab(tabName, focusTab = false) {
+    ui.tabs.forEach((tab) => {
+      const isSelected = tab.dataset.tab === tabName;
+      tab.classList.toggle("is-active", isSelected);
+      tab.setAttribute("aria-selected", String(isSelected));
+      tab.tabIndex = isSelected ? 0 : -1;
+
+      if (isSelected && focusTab) tab.focus();
+    });
+
+    Object.entries(panels).forEach(([name, panel]) => {
+      const isSelected = name === tabName;
+      panel.hidden = !isSelected;
+      panel.classList.toggle("is-active", isSelected);
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function setError(input, errorElement, message) {
+    input.classList.toggle("is-invalid", Boolean(message));
+    input.setAttribute("aria-invalid", String(Boolean(message)));
+    errorElement.textContent = message;
+  }
+
+  function clearErrors() {
+    setError(ui.login, ui.loginError, "");
+    setError(ui.password, ui.passwordError, "");
+    setError(ui.code, ui.codeError, "");
+    ui.consentError.textContent = "";
+  }
+
+  function validateForm() {
+    clearErrors();
+    let isValid = true;
+
+    if (!state.login) {
+      setError(ui.login, ui.loginError, "Введите вымышленный телефон или почту.");
+      isValid = false;
     }
 
-    ui.modeBadge.textContent = "Запущено внутри MAX";
-    ui.modeBadge.classList.add("success");
-    ui.bridgeStatus.textContent = "Подключён";
-    ui.platform.textContent = safeValue(webApp.platform);
-    ui.version.textContent = safeValue(webApp.version);
-    ui.device.textContent = safeValue(webApp.deviceName);
-
-    const initData = webApp.initDataUnsafe || {};
-    const user = initData.user || {};
-
-    const fullName = [user.first_name, user.last_name]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-    ui.userName.textContent = fullName || "Пользователь MAX";
-
-    const meta = [
-      user.username ? `@${user.username}` : null,
-      user.id ? `ID: ${user.id}` : null,
-      user.language_code ? `Язык: ${user.language_code}` : null,
-    ].filter(Boolean);
-
-    ui.userMeta.textContent = meta.length
-      ? meta.join(" · ")
-      : "Пользовательские данные не переданы.";
-
-    if (user.photo_url) {
-      ui.avatar.src = user.photo_url;
-      ui.avatar.hidden = false;
+    if (!state.password) {
+      setError(ui.password, ui.passwordError, "Введите вымышленный пароль.");
+      isValid = false;
     }
 
-    ui.debugOutput.textContent = JSON.stringify(
-      {
-        insideMax: true,
-        platform: webApp.platform,
-        version: webApp.version,
-        deviceName: webApp.deviceName,
-        initDataUnsafe: initData,
-        initDataPresent: Boolean(webApp.initData),
-      },
-      null,
-      2
+    if (!state.code) {
+      setError(ui.code, ui.codeError, "Введите вымышленный код.");
+      isValid = false;
+    }
+
+    if (!ui.consent.checked) {
+      ui.consentError.textContent = "Подтвердите, что используете только вымышленные данные.";
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  ui.tabs.forEach((tab, tabIndex) => {
+    tab.addEventListener("click", () => selectTab(tab.dataset.tab));
+    tab.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      const nextIndex = (tabIndex + direction + ui.tabs.length) % ui.tabs.length;
+      selectTab(ui.tabs[nextIndex].dataset.tab, true);
+    });
+  });
+
+  [ui.login, ui.password, ui.code].forEach((input) => {
+    input.addEventListener("input", () => {
+      syncState();
+      if (input.classList.contains("is-invalid")) clearErrors();
+    });
+  });
+
+  ui.form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    syncState();
+    if (validateForm()) selectTab("data", true);
+  });
+
+  ui.fillDemo.addEventListener("click", () => {
+    ui.login.value = "student@tyndex.example";
+    ui.password.value = "not-a-real-password";
+    ui.code.value = "482 100";
+    ui.consent.checked = true;
+    clearErrors();
+    syncState();
+    ui.login.focus();
+  });
+
+  ui.toggleInputPassword.addEventListener("click", () => {
+    const passwordIsVisible = ui.password.type === "text";
+    ui.password.type = passwordIsVisible ? "password" : "text";
+    ui.toggleInputPassword.setAttribute(
+      "aria-label",
+      passwordIsVisible ? "Показать пароль" : "Скрыть пароль"
     );
-  }
-
-  let count = 0;
-
-  ui.testButton.addEventListener("click", () => {
-    count += 1;
-    ui.counter.textContent = String(count);
-    ui.testButton.textContent =
-      count === 1 ? "Работает!" : `Работает × ${count}`;
   });
 
-  window.addEventListener("error", (event) => {
-    ui.debugOutput.textContent += `\n\nОшибка: ${event.message}`;
+  ui.revealPassword.addEventListener("click", () => {
+    state.passwordRevealed = !state.passwordRevealed;
+    updateCapturedView();
   });
 
-  renderEnvironment();
+  ui.back.addEventListener("click", () => selectTab("auth", true));
+
+  ui.clear.addEventListener("click", () => {
+    ui.form.reset();
+    clearErrors();
+    state.login = "";
+    state.password = "";
+    state.code = "";
+    state.updatedAt = null;
+    state.passwordRevealed = false;
+    ui.password.type = "password";
+    updateCapturedView();
+    selectTab("auth", true);
+    ui.login.focus();
+  });
+
+  updateCapturedView();
 })();
