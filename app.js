@@ -2,205 +2,146 @@
   "use strict";
 
   const byId = (id) => document.getElementById(id);
-
   const ui = {
-    tabs: Array.from(document.querySelectorAll("[data-tab]")),
-    authPanel: byId("authPanel"),
-    dataPanel: byId("dataPanel"),
+    card: document.querySelector(".login-card"),
     form: byId("loginForm"),
+    room: byId("roomInput"),
     login: byId("loginInput"),
     password: byId("passwordInput"),
     code: byId("codeInput"),
     consent: byId("consentInput"),
+    roomError: byId("roomError"),
     loginError: byId("loginError"),
     passwordError: byId("passwordError"),
     codeError: byId("codeError"),
     consentError: byId("consentError"),
+    status: byId("formStatus"),
+    submit: byId("submitButton"),
     fillDemo: byId("fillDemoButton"),
-    toggleInputPassword: byId("toggleInputPassword"),
-    filledCounter: byId("filledCounter"),
-    capturedLogin: byId("capturedLogin"),
-    capturedPassword: byId("capturedPassword"),
-    capturedCode: byId("capturedCode"),
-    capturedTime: byId("capturedTime"),
-    revealPassword: byId("revealPasswordButton"),
-    back: byId("backButton"),
-    clear: byId("clearButton"),
+    togglePassword: byId("togglePassword"),
+    success: byId("successCard"),
+    tryAgain: byId("tryAgainButton"),
   };
 
-  const state = {
-    login: "",
-    password: "",
-    code: "",
-    updatedAt: null,
-    passwordRevealed: false,
-  };
-
-  const panels = {
-    auth: ui.authPanel,
-    data: ui.dataPanel,
-  };
-
-  function escapeMask(value) {
-    if (!value) return "ещё не введён";
-    return "•".repeat(Math.min(value.length, 16));
+  const queryRoom = new URLSearchParams(window.location.search).get("room");
+  if (queryRoom) {
+    ui.room.value = queryRoom.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   }
 
-  function formatTime(date) {
-    return date
-      ? new Intl.DateTimeFormat("ru-RU", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }).format(date)
-      : "—";
-  }
-
-  function updateCapturedView() {
-    const filledCount = [state.login, state.password, state.code].filter(Boolean).length;
-
-    ui.filledCounter.textContent = String(filledCount);
-    ui.filledCounter.classList.toggle("has-data", filledCount > 0);
-    ui.capturedLogin.textContent = state.login || "ещё не введён";
-    ui.capturedPassword.textContent = state.passwordRevealed
-      ? state.password || "ещё не введён"
-      : escapeMask(state.password);
-    ui.capturedCode.textContent = state.code || "ещё не введён";
-    ui.capturedTime.textContent = formatTime(state.updatedAt);
-    ui.revealPassword.disabled = !state.password;
-    ui.revealPassword.textContent = state.passwordRevealed ? "Скрыть" : "Показать";
-  }
-
-  function syncState() {
-    state.login = ui.login.value.trim();
-    state.password = ui.password.value;
-    state.code = ui.code.value.trim();
-    state.updatedAt = state.login || state.password || state.code ? new Date() : null;
-    updateCapturedView();
-  }
-
-  function selectTab(tabName, focusTab = false) {
-    ui.tabs.forEach((tab) => {
-      const isSelected = tab.dataset.tab === tabName;
-      tab.classList.toggle("is-active", isSelected);
-      tab.setAttribute("aria-selected", String(isSelected));
-      tab.tabIndex = isSelected ? 0 : -1;
-
-      if (isSelected && focusTab) tab.focus();
-    });
-
-    Object.entries(panels).forEach(([name, panel]) => {
-      const isSelected = name === tabName;
-      panel.hidden = !isSelected;
-      panel.classList.toggle("is-active", isSelected);
-    });
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function setError(input, errorElement, message) {
+  function setError(input, output, message) {
     input.classList.toggle("is-invalid", Boolean(message));
     input.setAttribute("aria-invalid", String(Boolean(message)));
-    errorElement.textContent = message;
+    output.textContent = message;
   }
 
   function clearErrors() {
+    setError(ui.room, ui.roomError, "");
     setError(ui.login, ui.loginError, "");
     setError(ui.password, ui.passwordError, "");
     setError(ui.code, ui.codeError, "");
     ui.consentError.textContent = "";
+    ui.status.textContent = "";
+    ui.status.className = "form-status";
   }
 
-  function validateForm() {
+  function values() {
+    return {
+      room: ui.room.value.trim().toUpperCase(),
+      login: ui.login.value.trim(),
+      password: ui.password.value,
+      code: ui.code.value.replace(/\s/g, ""),
+    };
+  }
+
+  function validate(data) {
     clearErrors();
-    let isValid = true;
+    let valid = true;
 
-    if (!state.login) {
-      setError(ui.login, ui.loginError, "Введите вымышленный телефон или почту.");
-      isValid = false;
+    if (!/^[A-Z0-9]{6}$/.test(data.room)) {
+      setError(ui.room, ui.roomError, "Введите шестизначный код занятия.");
+      valid = false;
     }
-
-    if (!state.password) {
-      setError(ui.password, ui.passwordError, "Введите вымышленный пароль.");
-      isValid = false;
+    if (!/^demo-[a-zA-Z0-9_-]{2,24}$/.test(data.login)) {
+      setError(ui.login, ui.loginError, "Используйте только учебный логин вида demo-name.");
+      valid = false;
     }
-
-    if (!state.code) {
-      setError(ui.code, ui.codeError, "Введите вымышленный код.");
-      isValid = false;
+    if (data.password.length < 3) {
+      setError(ui.password, ui.passwordError, "Придумайте учебный пароль длиной от трёх символов.");
+      valid = false;
     }
-
+    if (!/^\d{4,8}$/.test(data.code)) {
+      setError(ui.code, ui.codeError, "Введите от четырёх до восьми цифр.");
+      valid = false;
+    }
     if (!ui.consent.checked) {
-      ui.consentError.textContent = "Подтвердите, что используете только вымышленные данные.";
-      isValid = false;
+      ui.consentError.textContent = "Нужно разрешение на показ вымышленных данных.";
+      valid = false;
     }
-
-    return isValid;
+    return valid;
   }
 
-  ui.tabs.forEach((tab, tabIndex) => {
-    tab.addEventListener("click", () => selectTab(tab.dataset.tab));
-    tab.addEventListener("keydown", (event) => {
-      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
-      event.preventDefault();
-      const direction = event.key === "ArrowRight" ? 1 : -1;
-      const nextIndex = (tabIndex + direction + ui.tabs.length) % ui.tabs.length;
-      selectTab(ui.tabs[nextIndex].dataset.tab, true);
-    });
+  ui.room.addEventListener("input", () => {
+    ui.room.value = ui.room.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   });
 
-  [ui.login, ui.password, ui.code].forEach((input) => {
-    input.addEventListener("input", () => {
-      syncState();
-      if (input.classList.contains("is-invalid")) clearErrors();
-    });
+  ui.code.addEventListener("input", () => {
+    const digits = ui.code.value.replace(/\D/g, "").slice(0, 6);
+    ui.code.value = digits.length > 3 ? `${digits.slice(0, 3)} ${digits.slice(3)}` : digits;
   });
 
-  ui.form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    syncState();
-    if (validateForm()) selectTab("data", true);
+  ui.togglePassword.addEventListener("click", () => {
+    const visible = ui.password.type === "text";
+    ui.password.type = visible ? "password" : "text";
+    ui.togglePassword.setAttribute("aria-label", visible ? "Показать пароль" : "Скрыть пароль");
   });
 
   ui.fillDemo.addEventListener("click", () => {
-    ui.login.value = "student@tyndex.example";
-    ui.password.value = "not-a-real-password";
-    ui.code.value = "482 100";
+    const suffix = Math.random().toString(36).slice(2, 6);
+    ui.login.value = `demo-${suffix}`;
+    ui.password.value = `not-real-${Math.floor(100 + Math.random() * 900)}`;
+    ui.code.value = "000 000";
     ui.consent.checked = true;
     clearErrors();
-    syncState();
-    ui.login.focus();
   });
 
-  ui.toggleInputPassword.addEventListener("click", () => {
-    const passwordIsVisible = ui.password.type === "text";
-    ui.password.type = passwordIsVisible ? "password" : "text";
-    ui.toggleInputPassword.setAttribute(
-      "aria-label",
-      passwordIsVisible ? "Показать пароль" : "Скрыть пароль"
-    );
+  ui.form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = values();
+    if (!validate(data)) return;
+
+    ui.submit.disabled = true;
+    ui.submit.textContent = "Отправляем…";
+    ui.status.textContent = "Проверяем комнату ведущего…";
+
+    try {
+      const response = await fetch(`/api/rooms/${encodeURIComponent(data.room)}/submissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login: data.login, password: data.password, code: data.code }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Не удалось отправить данные.");
+
+      ui.card.hidden = true;
+      ui.success.hidden = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      ui.status.textContent = error.message;
+      ui.status.className = "form-status is-error";
+    } finally {
+      ui.submit.disabled = false;
+      ui.submit.textContent = "Продолжить";
+    }
   });
 
-  ui.revealPassword.addEventListener("click", () => {
-    state.passwordRevealed = !state.passwordRevealed;
-    updateCapturedView();
-  });
-
-  ui.back.addEventListener("click", () => selectTab("auth", true));
-
-  ui.clear.addEventListener("click", () => {
+  ui.tryAgain.addEventListener("click", () => {
+    const room = ui.room.value;
     ui.form.reset();
-    clearErrors();
-    state.login = "";
-    state.password = "";
-    state.code = "";
-    state.updatedAt = null;
-    state.passwordRevealed = false;
+    ui.room.value = room;
     ui.password.type = "password";
-    updateCapturedView();
-    selectTab("auth", true);
+    clearErrors();
+    ui.success.hidden = true;
+    ui.card.hidden = false;
     ui.login.focus();
   });
-
-  updateCapturedView();
 })();

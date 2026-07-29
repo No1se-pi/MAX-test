@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#11110f" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'"
+  />
+  <title>Экран ведущего — Тындекс ID</title>
+  <link rel="icon" href="./public/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="admin-page">
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <div class="brand brand--light"><span>Т</span>ындекс <b>ID</b></div>
+        <p>Экран ведущего · данные не сохраняются на сервере</p>
+      </div>
+      <div class="connection-status" id="connectionStatus">
+        <span></span> Комната не запущена
+      </div>
+    </header>
+
+    <section class="admin-start" id="startPanel">
+      <p class="admin-kicker">Мастер-класс</p>
+      <h1>Покажем, что видит поддельная форма</h1>
+      <p>
+        Создайте временную комнату. После этого участники смогут подключиться по
+        коду, а результаты появятся здесь в реальном времени.
+      </p>
+      <button class="admin-primary" id="createRoomButton" type="button">Создать комнату</button>
+      <div class="admin-error" id="startError" role="alert"></div>
+    </section>
+
+    <section class="dashboard" id="dashboard" hidden>
+      <div class="session-bar">
+        <div class="room-block">
+          <span>Код занятия</span>
+          <strong id="roomCode">———</strong>
+        </div>
+        <div class="link-block">
+          <span>Ссылка для участников</span>
+          <code id="participantLink"></code>
+        </div>
+        <button class="copy-button" id="copyLinkButton" type="button">Копировать</button>
+        <button class="receive-button" id="toggleReceivingButton" type="button">Разрешить приём</button>
+      </div>
+
+      <section class="dashboard-summary">
+        <div>
+          <p class="admin-kicker">Прямой эфир</p>
+          <h1>Что получила форма</h1>
+        </div>
+        <div class="submission-count"><strong id="submissionCount">0</strong><span>ответов</span></div>
+      </section>
+
+      <div class="empty-state" id="emptyState">
+        <div class="pulse" aria-hidden="true"></div>
+        <h2>Пока пусто</h2>
+        <p>Разрешите приём и попросите участников отправить учебную форму.</p>
+      </div>
+
+      <div class="submission-grid" id="submissionGrid" aria-live="polite"></div>
+
+      <footer class="admin-actions">
+        <button class="admin-secondary" id="clearResultsButton" type="button">Очистить экран</button>
+        <button class="admin-danger" id="endRoomButton" type="button">Завершить комнату</button>
+      </footer>
+    </section>
+  </main>
+
+  <script src="./admin.js"></script>
+</body>
+</html>

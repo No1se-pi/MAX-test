@@ -1,0 +1,14 @@
+{
+  "name": "tyndex-security-workshop",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Локальный учебный стенд для демонстрации фишинга в MAX Mini Apps",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
